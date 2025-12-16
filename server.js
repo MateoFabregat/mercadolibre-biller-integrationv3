@@ -468,9 +468,10 @@ async function procesarReembolso(refund) {
       numero_orden: `refund-${refundId}`,
       informacion_adicional: `NC por reembolso - Original: ${comprobanteOriginal.serie}-${comprobanteOriginal.numero}`,
       referencias: [{
-        tipo: tipoOriginal,
+        tipo_cfe: tipoOriginal,
         serie: comprobanteOriginal.serie,
-        numero: comprobanteOriginal.numero
+        numero: parseInt(comprobanteOriginal.numero),
+        fecha: comprobanteOriginal.fecha_emision || comprobanteOriginal.created_at
       }],
       emails_notificacion: emailCliente ? [emailCliente] : undefined
     };
