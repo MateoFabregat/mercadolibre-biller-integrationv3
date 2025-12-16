@@ -1,0 +1,73 @@
+# Shopify-Biller Integration - Docker Compose
+# Para desarrollo local
+
+version: '3.8'
+
+services:
+  # Aplicación principal
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: shopify-biller
+    restart: unless-stopped
+    ports:
+      - "${SERVER_PORT:-3000}:3000"
+    environment:
+      - NODE_ENV=${NODE_ENV:-development}
+      - SERVER_PORT=3000
+      - SERVER_PUBLIC_URL=${SERVER_PUBLIC_URL}
+      # Biller
+      - BILLER_ENVIRONMENT=${BILLER_ENVIRONMENT:-test}
+      - BILLER_TOKEN=${BILLER_TOKEN}
+      - BILLER_EMPRESA_ID=${BILLER_EMPRESA_ID}
+      - BILLER_EMPRESA_RUT=${BILLER_EMPRESA_RUT}
+      - BILLER_EMPRESA_SUCURSAL=${BILLER_EMPRESA_SUCURSAL}
+      - BILLER_EMPRESA_NOMBRE=${BILLER_EMPRESA_NOMBRE}
+      # Shopify
+      - SHOPIFY_SHOP=${SHOPIFY_SHOP}
+      - SHOPIFY_API_KEY=${SHOPIFY_API_KEY}
+      - SHOPIFY_API_SECRET=${SHOPIFY_API_SECRET}
+      - SHOPIFY_ACCESS_TOKEN=${SHOPIFY_ACCESS_TOKEN}
+      # Facturación
+      - VALIDAR_RUT_CON_DGI=${VALIDAR_RUT_CON_DGI:-true}
+      - LIMITE_UI_ETICKET=${LIMITE_UI_ETICKET:-5000}
+      - VALOR_UI_UYU=${VALOR_UI_UYU:-6}
+    volumes:
+      # Persistir datos localmente
+      - ./data:/app/data
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    networks:
+      - shopify-biller-network
+
+  # ngrok para exposición pública (desarrollo)
+  ngrok:
+    image: ngrok/ngrok:latest
+    container_name: shopify-biller-ngrok
+    restart: unless-stopped
+    command:
+      - "http"
+      - "app:3000"
+      - "--domain=${NGROK_DOMAIN}"
+    environment:
+      - NGROK_AUTHTOKEN=${NGROK_AUTHTOKEN}
+    ports:
+      - "4040:4040"  # Panel de ngrok
+    depends_on:
+      - app
+    networks:
+      - shopify-biller-network
+    profiles:
+      - ngrok  # Solo se activa con: docker-compose --profile ngrok up
+
+networks:
+  shopify-biller-network:
+    driver: bridge
+
+volumes:
+  app-data:

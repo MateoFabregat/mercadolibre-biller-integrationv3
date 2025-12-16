@@ -1,0 +1,134 @@
+<!--
+  ============================================================
+  SCRIPT PARA MOSTRAR COMPROBANTE EN ORDER STATUS PAGE
+  ============================================================
+
+  INSTRUCCIONES:
+  1. Ve a Shopify Admin > Settings > Checkout
+  2. Busca la sección "Order status page" > "Additional scripts"
+  3. Pega TODO este código ahí
+  4. Reemplaza TU-URL-SERVIDOR con tu URL de ngrok/servidor
+  5. Guarda los cambios
+
+  El cliente verá un botón para descargar su comprobante fiscal
+  en la página de confirmación de pedido.
+  ============================================================
+-->
+
+<script>
+(function() {
+  // ⚠️ IMPORTANTE: Cambia esta URL por tu servidor
+  var SERVER_URL = 'https://transnatural-infortunately-rodrigo.ngrok-free.dev';
+
+  // Solo ejecutar en página de thank you / order status
+  if (Shopify.checkout && Shopify.checkout.order_id) {
+    var orderId = Shopify.checkout.order_id;
+
+    // Crear contenedor para el comprobante
+    var container = document.createElement('div');
+    container.id = 'comprobante-fiscal-container';
+    container.innerHTML = '<div style="text-align: center; padding: 20px; color: #666;">Buscando comprobante fiscal...</div>';
+    container.style.cssText = 'margin: 20px 0; padding: 0;';
+
+    // Insertar después del resumen del pedido
+    var orderSummary = document.querySelector('.content-box') || document.querySelector('.order-summary');
+    if (orderSummary) {
+      orderSummary.parentNode.insertBefore(container, orderSummary.nextSibling);
+    } else {
+      // Fallback: insertar al final del contenido principal
+      var main = document.querySelector('main') || document.querySelector('.content');
+      if (main) main.appendChild(container);
+    }
+
+    // Buscar comprobante en el servidor
+    fetch(SERVER_URL + '/api/comprobante/orden/' + orderId)
+      .then(function(response) { return response.json(); })
+      .then(function(data) {
+        if (data.found && data.comprobante) {
+          var c = data.comprobante;
+          var tipoTexto = {
+            101: 'e-Ticket',
+            102: 'NC e-Ticket',
+            111: 'e-Factura',
+            112: 'NC e-Factura'
+          }[c.tipo] || 'Comprobante';
+
+          container.innerHTML = '\
+            <div style="\
+              background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);\
+              border-radius: 12px;\
+              padding: 24px;\
+              text-align: center;\
+              color: white;\
+              box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);\
+            ">\
+              <div style="font-size: 40px; margin-bottom: 12px;">🧾</div>\
+              <div style="font-size: 18px; font-weight: 600; margin-bottom: 4px;">\
+                ' + tipoTexto + '\
+              </div>\
+              <div style="font-size: 24px; font-weight: 700; margin-bottom: 16px;">\
+                ' + c.numero + '\
+              </div>\
+              <a href="' + c.pdfUrl + '" \
+                 download \
+                 style="\
+                   display: inline-block;\
+                   background: white;\
+                   color: #667eea;\
+                   text-decoration: none;\
+                   padding: 12px 28px;\
+                   border-radius: 8px;\
+                   font-weight: 600;\
+                   font-size: 14px;\
+                   transition: transform 0.2s;\
+                 "\
+                 onmouseover="this.style.transform=\'scale(1.05)\'" \
+                 onmouseout="this.style.transform=\'scale(1)\'">\
+                Descargar PDF\
+              </a>\
+              <div style="margin-top: 12px; font-size: 12px; opacity: 0.8;">\
+                CAE: ' + (c.cae || 'Pendiente') + '\
+              </div>\
+            </div>\
+          ';
+        } else {
+          // No hay comprobante aún (puede estar procesándose)
+          container.innerHTML = '\
+            <div style="\
+              background: #f8f9fa;\
+              border: 1px solid #e9ecef;\
+              border-radius: 12px;\
+              padding: 20px;\
+              text-align: center;\
+              color: #6c757d;\
+            ">\
+              <div style="font-size: 32px; margin-bottom: 8px;">📄</div>\
+              <div style="font-size: 14px;">\
+                Tu comprobante fiscal está siendo procesado.<br>\
+                Lo recibirás por email en unos minutos.\
+              </div>\
+            </div>\
+          ';
+        }
+      })
+      .catch(function(error) {
+        console.log('Error buscando comprobante:', error);
+        container.innerHTML = '\
+          <div style="\
+            background: #f8f9fa;\
+            border: 1px solid #e9ecef;\
+            border-radius: 12px;\
+            padding: 20px;\
+            text-align: center;\
+            color: #6c757d;\
+          ">\
+            <div style="font-size: 32px; margin-bottom: 8px;">📄</div>\
+            <div style="font-size: 14px;">\
+              Tu comprobante fiscal será enviado por email.\
+            </div>\
+          </div>\
+        ';
+      });
+  }
+})();
+</script>
