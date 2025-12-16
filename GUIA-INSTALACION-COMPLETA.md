@@ -205,7 +205,7 @@ SHOPIFY_API_VERSION=2024-01
 # SERVIDOR
 # ============================================================
 SERVER_PORT=3000
-SERVER_PUBLIC_URL=https://tu-dominio.ngrok-free.app  # Se configura después
+SERVER_PUBLIC_URL=https://mercadolibre-biller-integrationv3.onrender.com
 
 # ============================================================
 # FACTURACIÓN
@@ -231,48 +231,15 @@ AUDIT_ENABLED=true
 
 ---
 
-## 6. Configurar ngrok (Desarrollo)
+## 6. Configuración del Servidor (Render)
 
-ngrok permite exponer tu servidor local a Internet para recibir webhooks de Shopify.
-
-### 6.1 Instalar ngrok
-
-```bash
-# Mac (con Homebrew)
-brew install ngrok
-
-# Windows (con Chocolatey)
-choco install ngrok
-
-# O descargar de https://ngrok.com/download
-```
-
-### 6.2 Autenticar ngrok
-
-```bash
-ngrok config add-authtoken TU_AUTH_TOKEN
-```
-
-El token lo encuentras en https://dashboard.ngrok.com/get-started/your-authtoken
-
-### 6.3 Usar Dominio Estático (Recomendado)
-
-Para evitar que la URL cambie cada vez:
-
-1. Ve a https://dashboard.ngrok.com/cloud-edge/domains
-2. Click "Create Domain" (gratis, 1 dominio estático)
-3. Copia tu dominio (ej: `liked-flying-ox.ngrok-free.app`)
-
-```bash
-# Iniciar ngrok con dominio estático
-ngrok http 3000 --domain=liked-flying-ox.ngrok-free.app
-```
-
-### 6.4 Actualizar .env
+La integración está desplegada en **Render** con URL fija:
 
 ```env
-SERVER_PUBLIC_URL=https://liked-flying-ox.ngrok-free.app
+SERVER_PUBLIC_URL=https://mercadolibre-biller-integrationv3.onrender.com
 ```
+
+No necesitas ngrok en producción - Render proporciona una URL pública permanente.
 
 ---
 
@@ -280,14 +247,6 @@ SERVER_PUBLIC_URL=https://liked-flying-ox.ngrok-free.app
 
 ### 7.1 Iniciar el Servidor
 
-Necesitas 2 terminales:
-
-**Terminal 1: ngrok**
-```bash
-ngrok http 3000 --domain=tu-dominio.ngrok-free.app
-```
-
-**Terminal 2: Servidor**
 ```bash
 npm start
 ```

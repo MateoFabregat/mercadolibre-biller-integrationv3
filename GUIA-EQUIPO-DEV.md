@@ -104,21 +104,12 @@ shopify-biller-integration/
 | `SHOPIFY_API_SECRET` | API credentials > API secret key |
 | `SHOPIFY_ACCESS_TOKEN` | Después de instalar la app |
 
-### 3.3 ngrok (Desarrollo)
+### 3.3 Servidor en Producción
 
-```bash
-# Instalar
-brew install ngrok  # Mac
-# o descargar de https://ngrok.com/download
+La integración está desplegada en Render:
 
-# Autenticar (obtener token en dashboard.ngrok.com)
-ngrok config add-authtoken TU_TOKEN
-
-# Crear dominio estático (gratis 1)
-# En: dashboard.ngrok.com/cloud-edge/domains
-
-# Usar dominio fijo
-ngrok http 3000 --domain=tu-dominio.ngrok-free.app
+```
+https://mercadolibre-biller-integrationv3.onrender.com
 ```
 
 ---
@@ -148,7 +139,7 @@ SHOPIFY_ACCESS_TOKEN=shpat_xxx
 # SERVIDOR
 # ============================================================
 SERVER_PORT=3000
-SERVER_PUBLIC_URL=https://tu-dominio.ngrok-free.app
+SERVER_PUBLIC_URL=https://mercadolibre-biller-integrationv3.onrender.com
 
 # ============================================================
 # FACTURACIÓN
@@ -178,10 +169,7 @@ DEDUPE_WINDOW=300000
 ### 5.1 Desarrollo
 
 ```bash
-# Terminal 1: ngrok
-ngrok http 3000 --domain=tu-dominio.ngrok-free.app
-
-# Terminal 2: servidor
+# Iniciar servidor
 npm start
 # o con auto-reload:
 npm run dev
@@ -375,11 +363,11 @@ El sistema busca el RUT del cliente en orden de prioridad:
 ### Webhook no llega
 
 ```bash
-# Verificar que ngrok está corriendo
-curl https://tu-dominio.ngrok-free.app/
+# Verificar que el servidor está corriendo
+curl https://mercadolibre-biller-integrationv3.onrender.com/
 
 # Re-registrar webhooks
-curl -X POST http://localhost:3000/api/setup-webhooks
+curl -X POST https://mercadolibre-biller-integrationv3.onrender.com/api/setup-webhooks
 
 # Ver webhooks en Shopify Admin
 # Settings > Notifications > Webhooks

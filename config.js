@@ -262,7 +262,7 @@ function validarConfiguracion() {
   
   // Servidor
   if (!config.server.publicUrl || config.server.publicUrl === 'http://localhost:3000') {
-    errors.push('SERVER_PUBLIC_URL debe configurarse con la URL pública (ngrok)');
+    errors.push('SERVER_PUBLIC_URL debe configurarse con la URL pública');
   }
   
   return {

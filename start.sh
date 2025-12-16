@@ -116,9 +116,9 @@ else
 fi
 
 # Server
-if [ -z "$SERVER_PUBLIC_URL" ] || [ "$SERVER_PUBLIC_URL" = "https://tu-url.ngrok-free.app" ]; then
+if [ -z "$SERVER_PUBLIC_URL" ] || [ "$SERVER_PUBLIC_URL" = "http://localhost:3000" ]; then
     echo -e "${YELLOW}⚠ SERVER_PUBLIC_URL no configurado${NC}"
-    echo "   Actualiza con tu URL de ngrok"
+    echo "   Actualiza con tu URL pública"
 else
     echo -e "${GREEN}✓ SERVER_PUBLIC_URL: $SERVER_PUBLIC_URL${NC}"
 fi

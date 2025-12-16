@@ -132,62 +132,33 @@ npm install
 cp .env.example .env
 # Edita .env y completa tus credenciales de Biller y Shopify
 
-# 4. Iniciar ngrok (Terminal 1)
-ngrok http 3000 --domain=tu-dominio-estatico.ngrok-free.app
-
-# 5. Iniciar servidor (Terminal 2)
+# 4. Iniciar servidor
 npm start
 
-# 6. Registrar webhooks (Terminal 3 - solo primera vez)
-curl -X POST https://tu-dominio-estatico.ngrok-free.app/api/setup-webhooks
+# 5. Registrar webhooks (solo primera vez)
+curl -X POST https://mercadolibre-biller-integrationv3.onrender.com/api/setup-webhooks
 ```
 
 ---
 
-## 🔌 Cómo Prender la Integración
+## 🔌 Servidor en Producción (Render)
 
-La integración requiere **dos procesos corriendo simultáneamente**:
+La integración está desplegada en **Render** y corre 24/7:
 
-### Terminal 1: ngrok (expone tu servidor a internet)
-
-**Opción A - Con dominio fijo (recomendado):**
-```bash
-# Primero obtén un dominio estático gratis en: https://dashboard.ngrok.com/cloud-edge/domains
-# Luego usa ese dominio cada vez:
-ngrok http 3000 --domain=tu-dominio-estatico.ngrok-free.app
-```
-
-**Opción B - Con URL temporal:**
-```bash
-ngrok http 3000
-```
-> ⚠️ Si usas URL temporal, copia la URL que te da ngrok (ej: `https://abc123.ngrok-free.app`) y actualiza `SERVER_PUBLIC_URL` en el archivo `.env`
-
-### Terminal 2: Servidor Node.js
-```bash
-# Ejecuta desde el mismo directorio del proyecto:
-npm start
-
-# o con el script de diagnóstico:
-bash start.sh
-```
+**URL del servidor:** `https://mercadolibre-biller-integrationv3.onrender.com`
 
 ### Registrar webhooks (solo la primera vez o si cambió la URL)
 ```bash
-# Reemplaza TU-URL-NGROK con tu URL real de ngrok
-curl -X POST https://TU-URL-NGROK/api/setup-webhooks
-
-# Ejemplo:
-curl -X POST https://transnatural-infortunately-rodrigo.ngrok-free.dev/api/setup-webhooks
+curl -X POST https://mercadolibre-biller-integrationv3.onrender.com/api/setup-webhooks
 ```
 
 ### Verificar que todo funciona
 ```bash
 # Ver estado general
-curl https://TU-URL-NGROK/?detailed=true
+curl https://mercadolibre-biller-integrationv3.onrender.com/?detailed=true
 
 # Ver estado de webhooks
-curl https://TU-URL-NGROK/api/webhooks-status
+curl https://mercadolibre-biller-integrationv3.onrender.com/api/webhooks-status
 ```
 
 ---
@@ -200,8 +171,8 @@ El archivo `.env` ya viene configurado con tus credenciales:
 |----------|-------|-------------|
 | `BILLER_TOKEN` | `XUEwFah7...` | Token de API Biller |
 | `BILLER_EMPRESA_ID` | `413` | ID de tu empresa en Biller |
-| `SHOPIFY_SHOP` | `test-biller` | Tu tienda Shopify |
-| `SERVER_PUBLIC_URL` | `https://transnatural-infortunately-rodrigo.ngrok-free.dev` | URL de ngrok |
+| `SHOPIFY_SHOP` | `tu-tienda` | Tu tienda Shopify |
+| `SERVER_PUBLIC_URL` | `https://mercadolibre-biller-integrationv3.onrender.com` | URL de Render |
 
 ---
 
@@ -311,9 +282,9 @@ Para que tus clientes vean el link de descarga del PDF en la página de confirma
 2. Busca la sección **"Order status page"** → **"Additional scripts"**
 3. Abre el archivo `SHOPIFY-ORDER-STATUS-SCRIPT.html` de este proyecto
 4. Copia TODO el contenido y pégalo en Additional scripts
-5. **IMPORTANTE**: Cambia `SERVER_URL` por tu URL de ngrok:
+5. **IMPORTANTE**: Verifica que `SERVER_URL` esté configurada correctamente:
    ```javascript
-   var SERVER_URL = 'https://TU-URL-NGROK.ngrok-free.dev';
+   var SERVER_URL = 'https://mercadolibre-biller-integrationv3.onrender.com';
    ```
 6. Guarda los cambios
 
