@@ -375,6 +375,7 @@ async function procesarPedidoPagado(order) {
       serie: comprobante.serie,
       numero: comprobante.numero,
       cae_numero: comprobante.cae_numero,
+      fecha_emision: comprobante.fecha_emision,
       cliente: billerData.cliente || null,
       total: order.total_price,
       shopify_order_name: orderName
@@ -427,7 +428,8 @@ async function procesarReembolso(refund) {
           id: encontrado.id,
           tipo_comprobante: encontrado.tipo_comprobante,
           serie: encontrado.serie,
-          numero: encontrado.numero
+          numero: encontrado.numero,
+          fecha_emision: encontrado.fecha_emision || encontrado.created_at
         };
       }
     }
