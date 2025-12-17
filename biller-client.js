@@ -360,8 +360,72 @@ class BillerClient {
   }
 
   /**
-   * Obtener string descriptivo del tipo de comprobante
+   * Anular comprobante creando automáticamente una NC
+   * Usa el endpoint /v2/comprobantes/anular que crea una NC completa
+   * @param {Object} params - Parámetros de anulación
+   * @param {number} params.id - ID del comprobante a anular (opcional si se usa tipo/serie/numero)
+   * @param {number} params.tipo_comprobante - Tipo del comprobante (opcional si se usa id)
+   * @param {string} params.serie - Serie del comprobante (opcional si se usa id)
+   * @param {number} params.numero - Número del comprobante (opcional si se usa id)
+   * @param {boolean} params.fecha_emision_hoy - Si true, la NC tiene fecha de hoy
    */
+  async anularComprobante(params) {
+    const { id, tipo_comprobante, serie, numero, fecha_emision_hoy = true } = params;
+
+    // Validar que tengamos identificación del comprobante
+    if (!id && !(tipo_comprobante && serie && numero)) {
+      throw new BillerError(
+        'Debe proporcionar id o tipo_comprobante+serie+numero',
+        'VALIDATION_ERROR',
+        400,
+        null
+      );
+    }
+
+    const datos = {
+      fecha_emision_hoy: fecha_emision_hoy ? 1 : 0
+    };
+
+    if (id) {
+      datos.id = id;
+    } else {
+      datos.tipo_comprobante = tipo_comprobante;
+      datos.serie = serie;
+      datos.numero = parseInt(numero, 10);
+    }
+
+    logger.info('Anulando comprobante', {
+      id: datos.id,
+      tipo: datos.tipo_comprobante,
+      serie: datos.serie,
+      numero: datos.numero
+    });
+
+    const response = await this.requestWithRetry(
+      'POST',
+      '/comprobantes/anular',
+      datos,
+      'anular-comprobante'
+    );
+
+    logger.info('✅ Comprobante anulado exitosamente', {
+      ncId: response.id,
+      ncTipo: response.tipo_comprobante,
+      ncSerie: response.serie,
+      ncNumero: response.numero
+    });
+
+    return {
+      id: response.id,
+      tipo_comprobante: response.tipo_comprobante,
+      serie: response.serie,
+      numero: response.numero,
+      hash: response.hash,
+      fecha_emision: response.fecha_emision,
+      pdfUrl: `${this.baseUrl}/comprobantes/${response.id}/pdf`
+    };
+  }
+
   getTipoComprobanteStr(tipo) {
     const tipos = {
       101: 'e-Ticket',

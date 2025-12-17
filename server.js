@@ -10,7 +10,7 @@ const express = require('express');
 const crypto = require('crypto');
 const path = require('path');
 const config = require('./config');
-const { BillerClient, shopifyOrderToBiller, shopifyRefundToNCItems } = require('./biller-client');
+const { BillerClient, shopifyOrderToBiller } = require('./biller-client');
 const { ShopifyClient } = require('./shopify-client');
 const logger = require('./utils/logger');
 const { getComprobanteStore, WebhookDedupeStore } = require('./utils/store');
@@ -414,13 +414,13 @@ async function procesarPedidoPagado(order) {
 async function procesarReembolso(refund) {
   const refundId = refund.id;
   const orderId = refund.order_id;
-  
+
   const op = logger.startOperation(refundId, `Procesar reembolso`);
-  
+
   try {
     // Buscar comprobante original
     let comprobanteOriginal = comprobanteStore.get(orderId);
-    
+
     if (!comprobanteOriginal) {
       const encontrado = await biller.buscarPorNumeroInterno(`shopify-${orderId}`);
       if (encontrado) {
@@ -439,72 +439,43 @@ async function procesarReembolso(refund) {
       return { status: 'skipped', reason: 'no_original_invoice' };
     }
 
-    // Obtener pedido original
-    let originalOrder = null;
-    try {
-      originalOrder = await shopify.getOrder(orderId);
-    } catch (e) {
-      logger.warn('No se pudo obtener pedido original', { error: e.message });
-    }
+    // Usar endpoint de anulación de Biller
+    // Esto crea automáticamente una NC que anula el comprobante original
+    logger.info('Anulando comprobante original con endpoint /anular', {
+      comprobanteId: comprobanteOriginal.id,
+      tipo: comprobanteOriginal.tipo_comprobante,
+      serie: comprobanteOriginal.serie,
+      numero: comprobanteOriginal.numero
+    });
 
-    // Determinar tipo de NC
-    const tipoOriginal = comprobanteOriginal.tipo_comprobante;
-    const tipoNC = (tipoOriginal === 111 || tipoOriginal === 112 || tipoOriginal === 113)
-      ? config.TIPOS_CFE.NC_E_FACTURA
-      : config.TIPOS_CFE.NC_E_TICKET;
+    const nc = await biller.anularComprobante({
+      id: comprobanteOriginal.id,
+      tipo_comprobante: comprobanteOriginal.tipo_comprobante,
+      serie: comprobanteOriginal.serie,
+      numero: comprobanteOriginal.numero,
+      fecha_emision_hoy: true
+    });
 
-    // Items de la NC
-    const ncItems = shopifyRefundToNCItems(refund, originalOrder);
-    if (ncItems.length === 0) {
-      logger.warn('Reembolso sin items');
-      return { status: 'skipped', reason: 'no_items' };
-    }
-
-    // Datos de la NC
-    const emailCliente = originalOrder?.email || originalOrder?.customer?.email;
-
-    const ncData = {
-      tipo_comprobante: tipoNC,
-      items: ncItems,
-      numero_interno: `shopify-refund-${refundId}`,
-      numero_orden: `refund-${refundId}`,
-      informacion_adicional: `NC por reembolso - Original: ${comprobanteOriginal.serie}-${comprobanteOriginal.numero}`,
-      referencias: [{
-        tipo_cfe: tipoOriginal,
-        serie: comprobanteOriginal.serie,
-        numero: parseInt(comprobanteOriginal.numero),
-        fecha: comprobanteOriginal.fecha_emision || comprobanteOriginal.created_at
-      }],
-      emails_notificacion: emailCliente ? [emailCliente] : undefined
-    };
-
-    if (comprobanteOriginal.cliente) {
-      ncData.cliente = comprobanteOriginal.cliente;
-    }
-
-    // Emitir NC
-    const nc = await biller.emitirComprobante(ncData);
     metrics.comprobantesEmitidos++;
 
-    // Guardar
+    // Guardar NC
     comprobanteStore.set(`refund-${refundId}`, {
       id: nc.id,
-      tipo_comprobante: tipoNC,
+      tipo_comprobante: nc.tipo_comprobante,
       serie: nc.serie,
       numero: nc.numero,
-      cae_numero: nc.cae_numero,
       referencia: `${comprobanteOriginal.serie}-${comprobanteOriginal.numero}`,
       shopify_order_id: orderId
     });
 
     op.end({ nc: `${nc.serie}-${nc.numero}` });
-    
-    return { 
-      status: 'success', 
-      tipo: biller.getTipoComprobanteStr(tipoNC),
+
+    return {
+      status: 'success',
+      tipo: biller.getTipoComprobanteStr(nc.tipo_comprobante),
       comprobante: { id: nc.id, serie: nc.serie, numero: nc.numero }
     };
-    
+
   } catch (error) {
     op.fail(error);
     throw error;
